@@ -24,7 +24,8 @@ from infra_utils.QueryInfradb import (
 )
 from dotenv import load_dotenv
 import logging
-from .validation_schema import FetchRackSlotTypeByProjectSchema, QueryStbInfoSchema, GetStbStatusBrokenSchema
+from .validation_schema import FetchRackSlotTypeByProjectSchema, QueryStbInfoSchema, GetStbStatusBrokenSchema, \
+    GetBrokenFromRackSchema
 from .validation_schema.utils import (
     slot_range_validator,
     hw_type_validator,
@@ -197,3 +198,47 @@ class GetStbStatusBroken(Resource):
         out_dict = {'broken': func_outs}
         return make_response(jsonify(out_dict))
 
+
+@ns.route("/get_broken_from_rack")
+class GetBrokenFromRack(Resource):
+    @mos_authlib.mos_authlib_rest(["admin"])
+    @ns.expect(
+        im_ns(
+            ns=ns,
+            name="get_broken_from_rack swagger expected model",
+            schema_model={'ip_rack': fields.String(required=True, description="Rack IP address")}
+        ),
+        validate=False,
+    )
+    @validate_with_schema(GetBrokenFromRackSchema())
+    def post(self):
+
+        req_data = request.get_json()
+        print(req_data)
+        # return make_response(jsonify(req_data))
+        data_in: dict = GetBrokenFromRackSchema().load(req_data)
+        out_dict: dict = get_broken_from_rack(data_in['ip_rack'])
+        return make_response(jsonify(out_dict))
+
+@ns.route("/query_stb_project_info")
+class FetchRackSlotTypeByProject(Resource):
+    @mos_authlib.mos_authlib_rest(["admin"])
+    @ns.expect(
+        im_ns(
+            ns=ns,
+            name="query_stb_project_info swagger expected model",
+            schema_model={'ip': fields.String(required=True, description="Rack IP address"),
+                            'slot': fields.Integer(required=True, description="Slot SetTopBox")}
+        ),
+        validate=False,
+    )
+    @validate_with_schema(QueryStbInfoSchema())
+    def post(self):
+
+        req_data = request.get_json()
+        print(req_data)
+        # return make_response(jsonify(req_data))
+        data_in: dict = QueryStbInfoSchema().load(req_data)
+        func_outs: tuple = query_stb_project_info(data_in['ip'],data_in['slot'])
+        out_dict: dict = {'info': func_outs}
+        return make_response(jsonify(out_dict))
