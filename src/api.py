@@ -301,3 +301,12 @@ class AvailableSlots(Resource):
         func_outs: int = available_slots(data_in['proj'],data_in['typ'])
         dict_out = {'available_slots': func_outs}
         return make_response(jsonify(dict_out))
+
+
+@ns.route("/get_auto_reboot")
+class FetchRackSlotTypeByProject(Resource):
+    @mos_authlib.mos_authlib_rest(["admin"])
+    def post(self):
+        func_outs: list = get_auto_reboot()
+        dict_out: dict = {'autoreboots': func_outs}
+        return make_response(jsonify(dict_out))
