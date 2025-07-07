@@ -25,7 +25,7 @@ from infra_utils.QueryInfradb import (
 from dotenv import load_dotenv
 import logging
 from .validation_schema import FetchRackSlotTypeByProjectSchema, QueryStbInfoSchema, GetStbStatusBrokenSchema, \
-    GetBrokenFromRackSchema
+    GetBrokenFromRackSchema, GetRackSlotByIpSchema
 from .validation_schema.utils import (
     slot_range_validator,
     hw_type_validator,
@@ -149,8 +149,8 @@ class FetchRackSlotTypeByProject(Resource):
 
         for p in projects:
             func_outs.append({p: fetch_rack_slot_type_by_project(project=p)})
-        out_dict = {"projects": func_outs}
-        return make_response(jsonify(out_dict))
+        dict_out = {"projects": func_outs}
+        return make_response(jsonify(dict_out))
 
 @ns.route("/query_stb_info")
 class FetchRackSlotTypeByProject(Resource):
@@ -172,8 +172,8 @@ class FetchRackSlotTypeByProject(Resource):
         # return make_response(jsonify(req_data))
         data_in: dict = QueryStbInfoSchema().load(req_data)
         func_outs: tuple = query_stb_info(data_in['ip'],data_in['slot'])
-        out_dict: dict = {'info': func_outs}
-        return make_response(jsonify(out_dict))
+        dict_out: dict = {'info': func_outs}
+        return make_response(jsonify(dict_out))
 
 @ns.route("/get_stb_status_broken")
 class GetStbStatusBroken(Resource):
@@ -195,8 +195,8 @@ class GetStbStatusBroken(Resource):
         # return make_response(jsonify(req_data))
         data_in: dict = GetStbStatusBrokenSchema().load(req_data)
         func_outs: bool = get_stb_status_broken(data_in['ip'],data_in['slot'])
-        out_dict = {'broken': func_outs}
-        return make_response(jsonify(out_dict))
+        dict_out = {'broken': func_outs}
+        return make_response(jsonify(dict_out))
 
 
 @ns.route("/get_broken_from_rack")
@@ -217,8 +217,8 @@ class GetBrokenFromRack(Resource):
         print(req_data)
         # return make_response(jsonify(req_data))
         data_in: dict = GetBrokenFromRackSchema().load(req_data)
-        out_dict: dict = get_broken_from_rack(data_in['ip_rack'])
-        return make_response(jsonify(out_dict))
+        dict_out: dict = get_broken_from_rack(data_in['ip_rack'])
+        return make_response(jsonify(dict_out))
 
 @ns.route("/query_stb_project_info")
 class FetchRackSlotTypeByProject(Resource):
@@ -240,5 +240,41 @@ class FetchRackSlotTypeByProject(Resource):
         # return make_response(jsonify(req_data))
         data_in: dict = QueryStbInfoSchema().load(req_data)
         func_outs: tuple = query_stb_project_info(data_in['ip'],data_in['slot'])
-        out_dict: dict = {'info': func_outs}
-        return make_response(jsonify(out_dict))
+        dict_out: dict = {'info': func_outs}
+        return make_response(jsonify(dict_out))
+# TBD
+# @ns.route("/get_all_stb")
+# class FetchRackSlotTypeByProject(Resource):
+#     @mos_authlib.mos_authlib_rest(["admin"])
+#     def post(self):
+#         func_outs: list = get_all_stb()
+#         out_json_list = []
+#         for out in func_outs:
+#              out_json_list.append(out.__dict__)
+#             #return make_response(jsonify(str(out)))
+#         dict_out: dict = {'stbs': func_outs}
+#         return make_response(jsonify(dict_out))
+
+@ns.route("/get_rack_slot_by_ip")
+class GetRackSlotByIp(Resource):
+    @mos_authlib.mos_authlib_rest(["admin"])
+    @ns.expect(
+        im_ns(
+            ns=ns,
+            name="get_rack_slot_by_ip swagger expected model",
+            schema_model={'ip': fields.String(required=True, description="STB IP address")}
+        ),
+        validate=False,
+    )
+    @validate_with_schema(GetRackSlotByIpSchema())
+    def post(self):
+
+        req_data = request.get_json()
+        print(req_data)
+        # return make_response(jsonify(req_data))
+        data_in: dict = GetRackSlotByIpSchema().load(req_data)
+        func_outs: tuple = get_rack_slot_by_ip(data_in['ip'])
+        dict_out: dict = dict()
+        dict_out['rack_ip'] = func_outs[0]
+        dict_out['slot_number'] = func_outs[1]
+        return make_response(jsonify(dict_out))
