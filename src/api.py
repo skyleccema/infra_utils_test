@@ -49,7 +49,22 @@ app = Flask(__name__)
 # CORS
 CORS(app)
 
-api = Api(app)
+authorizations = {
+    'Bearer': {
+        'type': 'apiKey',
+        'in': 'header',
+        'name': 'Authorization',
+        'description': "Type in the *'Value'* input box below: **'Bearer &lt;JWT&gt;'**, where JWT is the access token"
+    },
+
+}
+
+api = Api(app,
+                   title="Sky Automation - Automation Infra Utils",
+                   description="API REST Sky Automation - Infra Utils Microservice",
+                   security=["Bearer"],
+                   authorizations=authorizations)
+
 
 # -----------------------------------------------------------------------
 # -- KEYCLOAK SSO --
