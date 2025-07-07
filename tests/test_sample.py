@@ -1,3 +1,9 @@
+import sys
+import os
+
+print(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 import pytest
 from src.api import app
 
@@ -9,8 +15,8 @@ def client():
         yield client
 
 
-def test_create_user(client):
-    # Test creazione utente
+def test_fetch_rack_slot_type_by_project(client):
+    # Test fetch_rack_slot_type_by_project
     user_data = {"projects": ["CERRI"]}
 
     response = client.post(
@@ -18,3 +24,13 @@ def test_create_user(client):
     )
 
     assert response.status_code == 200
+
+def test_failing_fetch_rack_slot_type_by_project(client):
+    # Test fetch_rack_slot_type_by_project
+    user_data = {"projects": ["pippo"]}
+
+    response = client.post(
+        "/infra_utils/fetch_rack_slot_type_by_project", json=user_data
+    )
+
+    assert response.status_code == 400

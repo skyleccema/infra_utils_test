@@ -1,12 +1,18 @@
 requires = ["tox>=4"]
 env_list = ["lint", "type", "3.12.10"]
 
+[tox]
+log_level = "DEBUG"
+
 [env_run_base]
 description = "run unit tests"
 deps = [
     "pytest>=8",
-    "pytest-sugar"
+    "pytest-sugar",
+    "-r{toxinidir}/requirements.txt",
+    "infra_utils/v2.0/dist/infra_utils_sqlalchemy_2.0-0.0.2-py3-none-any.whl"
 ]
+set_env = { PYTHONPATH = "{env:PYTHONPATH}{:}{toxinidir}" }
 commands = [["pytest", { replace = "posargs", default = ["tests"], extend = true }]]
 
 [env.lint]
