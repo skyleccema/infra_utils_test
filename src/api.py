@@ -1,3 +1,6 @@
+import hashlib
+import json
+import os
 from flask import Flask, request, make_response, jsonify
 from flask_restx import Resource, Api, fields
 from flask_cors import CORS
@@ -30,6 +33,9 @@ from .validation_schema.utils import (
     validate_with_schema,
     im,
 )
+from authlib.integrations.flask_client import OAuth
+import requests
+from .lib import mos_authlib
 
 # LOGGING and ENV VARS
 dotenv_path = "env/.env"  # container in /app/ and locally in {HOME}/github_repo
@@ -45,6 +51,55 @@ CORS(app)
 
 api = Api(app)
 
+# -----------------------------------------------------------------------
+# -- KEYCLOAK SSO --
+
+KEYCLOAK_CLIENT_CONFIG = os.environ.get("KEYCLOAK_CLIENT_CONFIG") or "keycloak.json"
+with open(KEYCLOAK_CLIENT_CONFIG) as kc_file:
+    KEYCLOAK_CONF = json.load(kc_file)
+
+KEYCLOAK_CLIENT_ID = KEYCLOAK_CONF.get('resource')
+KEYCLOAK_CLIENT_SECRET = KEYCLOAK_CONF['credentials']['secret']
+KEYCLOAK_SERVER_METADATA_URL = f"%srealms/%s/.well-known/openid-configuration" % (
+    KEYCLOAK_CONF.get('auth-server-url'),
+    KEYCLOAK_CONF.get('realm')
+)
+
+# -----------------------------------------------------------------------
+# -- AUTH INTERNAL API --
+
+AUTH_INTERNAL_API = [
+    {
+        "user": "dag",
+        "pass": "skyDag!@2022",
+        "ip": ['*']
+    }
+]
+AUTH_INTERNAL_API_B64 = [
+    hashlib.md5(bytes("%s:%s" % (a['user'], a['pass']), "utf-8")).hexdigest() for a in AUTH_INTERNAL_API]
+
+# -----------------------------------------------------------------------
+
+
+oauth = OAuth()
+
+oauth.init_app(app)
+try:
+    oauth.register(
+        name='keycloak',
+        client_id=KEYCLOAK_CLIENT_ID,
+        client_secret=KEYCLOAK_CLIENT_SECRET,
+        server_metadata_url=KEYCLOAK_SERVER_METADATA_URL,
+        client_kwargs={
+            'scope': 'openid email profile',
+            'code_challenge_method': 'S256'  # enable PKCE
+        },
+    )
+    oauth.keycloak.load_server_metadata()
+    oauth.keycloak.fetch_jwk_set()
+except requests.exceptions.ConnectionError as e:
+    app.logger.error("Keycloak connection error: %s" % e)
+    exit(-1)
 
 # Namespace
 ns = api.namespace("infra_utils", description="infra_utils library as microservice")
@@ -52,7 +107,7 @@ ns = api.namespace("infra_utils", description="infra_utils library as microservi
 
 @ns.route("/fetch_rack_slot_type_by_project")
 class FetchRackSlotTypeByProject(Resource):
-
+    @mos_authlib.mos_authlib_rest(['admin'])
     @ns.expect(
         im_ns(
             ns=ns,
