@@ -1,0 +1,33 @@
+requires = ["tox>=4"]
+env_list = ["lint", "type", "3.12.10"]
+
+[env_run_base]
+description = "run unit tests"
+deps = [
+    "pytest>=8",
+    "pytest-sugar"
+]
+commands = [["pytest", { replace = "posargs", default = ["tests"], extend = true }]]
+
+[env.lint]
+description = "run linters"
+skip_install = true
+deps = ["black"]
+commands = [["black", { replace = "posargs", default = ["."], extend = true} ]]
+
+[env.type]
+description = "run type checks"
+deps = [
+    "mypy",
+    "Flask",
+    "marshmallow",
+    "flask-restx",
+    "flask-cors",
+    "types-Flask",
+    "types-flask-cors",
+]
+commands = [
+    ["pip", "install", "-r", "requirements.txt"],
+    ["mypy", "--allow-untyped-defs", "--ignore-missing-imports", { replace = "posargs", default = ["tests", "src"], extend = true }]
+]
+

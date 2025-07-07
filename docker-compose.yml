@@ -1,0 +1,36 @@
+version: "3"
+
+services:
+  app:
+    container_name: "infra-hello-flask"
+    image: infra_util_microservice-app:0.1
+#    build: .
+    ports:
+      - 5000:5000
+    networks:
+      - infra_util_net
+#    develop:
+#      watch:
+#        - action: sync+restart
+#          path: ./app
+#          target: /app
+#          ignore:
+#            - "/app/logs/"
+    volumes:
+#      - type: bind
+#        source: ${HOME}/github_repos/infra_utils_test/src
+#        target: /app/src
+#        read_only: False
+      - type: bind
+        source: ${HOME}/github_repos/infra_utils_test/run.py
+        target: /app/run.py
+        read_only: False
+      - type: bind
+        source: ${HOME}/github_repos/infra_utils_test/logs
+        target: /app/logs
+        read_only: False
+      - type: bind
+        source: ${HOME}/github_repos/infra_utils_test/env
+        target: /app/env
+networks:
+  infra_util_net:

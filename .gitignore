@@ -1,0 +1,9 @@
+logs/*
+__pycache__
+env/*
+*.BAK
+.idea/*
+venv/*
+*.log
+.venv/*
+.tox/*

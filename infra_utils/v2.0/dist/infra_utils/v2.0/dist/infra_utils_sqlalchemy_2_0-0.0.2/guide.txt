@@ -1,0 +1,16 @@
+to compile
+    python setup.py sdist bdist_wheel
+to install
+    bisogna creare un personal token su gitlab con api access
+    pip install infra-utils --trusted-host gitlab.skytech.local --index-url http://<username>:<personal_token>@gitlab.skytech.local/api/v4/projects/2897/packages/pypi/simple
+
+    pip  install .
+    or
+    pip  install .\dist\infra_utils-0.0.1-py3-none-any.whl
+upload
+    bisogna creare un personal token su gitlab con api access
+
+    Bisogna disabilitare il controllo del certificato portando a False la riga 424 del file
+    .\infra_utils\venv\Lib\site-packages\requests\session.py
+
+    python -m twine upload --verbose --repository-url https://<username>:<Personal_token>@gitlab.skytech.local/api/v4/projects/2897/packages/pypi dist/*
