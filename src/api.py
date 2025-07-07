@@ -25,7 +25,7 @@ from infra_utils.QueryInfradb import (
 from dotenv import load_dotenv
 import logging
 from .validation_schema import FetchRackSlotTypeByProjectSchema, QueryStbInfoSchema, GetStbStatusBrokenSchema, \
-    GetBrokenFromRackSchema, GetRackSlotByIpSchema
+    GetBrokenFromRackSchema, GetRackSlotByIpSchema, AvailableSlotsSchema
 from .validation_schema.utils import (
     slot_range_validator,
     hw_type_validator,
@@ -277,4 +277,27 @@ class GetRackSlotByIp(Resource):
         dict_out: dict = dict()
         dict_out['rack_ip'] = func_outs[0]
         dict_out['slot_number'] = func_outs[1]
+        return make_response(jsonify(dict_out))
+
+@ns.route("/available_slots")
+class AvailableSlots(Resource):
+    @mos_authlib.mos_authlib_rest(["admin"])
+    @ns.expect(
+        im_ns(
+            ns=ns,
+            name="available_slots swagger expected model",
+            schema_model={'proj': fields.String(required=True, description="Project name"),
+               'typ': fields.String(required=True, description="Hw device type")}
+        ),
+        validate=False,
+    )
+    @validate_with_schema(AvailableSlotsSchema())
+    def post(self):
+
+        req_data = request.get_json()
+        print(req_data)
+        # return make_response(jsonify(req_data))
+        data_in: dict = AvailableSlotsSchema().load(req_data)
+        func_outs: int = available_slots(data_in['proj'],data_in['typ'])
+        dict_out = {'available_slots': func_outs}
         return make_response(jsonify(dict_out))
