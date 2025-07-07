@@ -25,7 +25,7 @@ from infra_utils.QueryInfradb import (
 from dotenv import load_dotenv
 import logging
 from .validation_schema import FetchRackSlotTypeByProjectSchema, QueryStbInfoSchema, GetStbStatusBrokenSchema, \
-    GetBrokenFromRackSchema, GetRackSlotByIpSchema, AvailableSlotsSchema
+    GetBrokenFromRackSchema, GetRackSlotByIpSchema, AvailableSlotsSchema, GetIpSchema
 from .validation_schema.utils import (
     slot_range_validator,
     hw_type_validator,
@@ -310,3 +310,30 @@ class FetchRackSlotTypeByProject(Resource):
         func_outs: list = get_auto_reboot()
         dict_out: dict = {'autoreboots': func_outs}
         return make_response(jsonify(dict_out))
+
+
+@ns.route("/get_ip")
+class GetIp(Resource):
+    @mos_authlib.mos_authlib_rest(["admin"])
+    @ns.expect(
+        im_ns(
+            ns=ns,
+            name="get_ip swagger expected model",
+            schema_model={'slot': fields.Integer(required=True, description="Slot SetTopBox"),
+               'server_name': fields.String(required=True, description="Rack IP address"),
+               'server_ip': fields.String(required=True, description="Rack IP address"),
+               }
+        ),
+        validate=False,
+    )
+    @validate_with_schema(GetIpSchema())
+    def post(self):
+
+        req_data = request.get_json()
+        print(req_data)
+        # return make_response(jsonify(req_data))
+        data_in: dict = GetIpSchema().load(req_data)
+        func_outs: str = str(get_ip(data_in['slot'],data_in['server_name'],data_in['server_ip']))
+        dict_out = {'ip': func_outs}
+        return make_response(jsonify(dict_out))
+

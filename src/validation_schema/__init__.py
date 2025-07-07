@@ -5,3 +5,4 @@ from .get_stb_status_broken_schema import GetStbStatusBrokenSchema
 from .get_broken_from_rack_schema import GetBrokenFromRackSchema
 from .get_rack_slot_by_ip_schema import GetRackSlotByIpSchema
 from .available_slots_schema import AvailableSlotsSchema
+from .get_ip_schema import GetIpSchema
