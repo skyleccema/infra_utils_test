@@ -24,7 +24,7 @@ from infra_utils.QueryInfradb import (
 )
 from dotenv import load_dotenv
 import logging
-from .validation_schema import FetchRackSlotTypeByProjectSchema, QueryStbInfoSchema
+from .validation_schema import FetchRackSlotTypeByProjectSchema, QueryStbInfoSchema, GetStbStatusBrokenSchema
 from .validation_schema.utils import (
     slot_range_validator,
     hw_type_validator,
@@ -169,13 +169,31 @@ class FetchRackSlotTypeByProject(Resource):
         req_data = request.get_json()
         print(req_data)
         # return make_response(jsonify(req_data))
-        data_in: tuple = QueryStbInfoSchema().load(req_data)
-        func_outs = query_stb_info(data_in['ip'],data_in['slot'])
-        return make_response(jsonify(func_outs))
-        # projects = pr["projects"]
-        # func_outs = []
-        #
-        # for p in projects:
-        #     func_outs.append({p: fetch_rack_slot_type_by_project(project=p)})
-        # out_dict = {"projects": func_outs}
-        # return make_response(jsonify(out_dict))
+        data_in: dict = QueryStbInfoSchema().load(req_data)
+        func_outs: tuple = query_stb_info(data_in['ip'],data_in['slot'])
+        out_dict: dict = {'info': func_outs}
+        return make_response(jsonify(out_dict))
+
+@ns.route("/get_stb_status_broken")
+class GetStbStatusBroken(Resource):
+    @mos_authlib.mos_authlib_rest(["admin"])
+    @ns.expect(
+        im_ns(
+            ns=ns,
+            name="get_stb_status_broken swagger expected model",
+            schema_model={'ip': fields.String(required=True, description="Rack IP address"),
+                            'slot': fields.Integer(required=True, description="Slot SetTopBox")}
+        ),
+        validate=False,
+    )
+    @validate_with_schema(GetStbStatusBrokenSchema())
+    def post(self):
+
+        req_data = request.get_json()
+        print(req_data)
+        # return make_response(jsonify(req_data))
+        data_in: dict = GetStbStatusBrokenSchema().load(req_data)
+        func_outs: bool = get_stb_status_broken(data_in['ip'],data_in['slot'])
+        out_dict = {'broken': func_outs}
+        return make_response(jsonify(out_dict))
+
