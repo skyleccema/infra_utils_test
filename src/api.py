@@ -24,7 +24,7 @@ from infra_utils.QueryInfradb import (
 )
 from dotenv import load_dotenv
 import logging
-from .validation_schema import FetchRackSlotTypeByProjectSchema
+from .validation_schema import FetchRackSlotTypeByProjectSchema, QueryStbInfoSchema
 from .validation_schema.utils import (
     slot_range_validator,
     hw_type_validator,
@@ -61,10 +61,11 @@ authorizations = {
 
 api = Api(app,
                    title="Sky Automation - Automation Infra Utils",
-                   description="API REST Sky Automation - Infra Utils Microservice",
+                   description="API REST Sky Automation - Automation Infra Utils Microservice",
                    security=["Bearer"],
                    authorizations=authorizations)
 
+#api = Api(app)
 
 # -----------------------------------------------------------------------
 # -- KEYCLOAK SSO --
@@ -73,25 +74,21 @@ KEYCLOAK_CLIENT_CONFIG = os.environ.get("KEYCLOAK_CLIENT_CONFIG") or "keycloak.j
 with open(KEYCLOAK_CLIENT_CONFIG) as kc_file:
     KEYCLOAK_CONF = json.load(kc_file)
 
-KEYCLOAK_CLIENT_ID = KEYCLOAK_CONF.get('resource')
-KEYCLOAK_CLIENT_SECRET = KEYCLOAK_CONF['credentials']['secret']
+KEYCLOAK_CLIENT_ID = KEYCLOAK_CONF.get("resource")
+KEYCLOAK_CLIENT_SECRET = KEYCLOAK_CONF["credentials"]["secret"]
 KEYCLOAK_SERVER_METADATA_URL = f"%srealms/%s/.well-known/openid-configuration" % (
-    KEYCLOAK_CONF.get('auth-server-url'),
-    KEYCLOAK_CONF.get('realm')
+    KEYCLOAK_CONF.get("auth-server-url"),
+    KEYCLOAK_CONF.get("realm"),
 )
 
 # -----------------------------------------------------------------------
 # -- AUTH INTERNAL API --
 
-AUTH_INTERNAL_API = [
-    {
-        "user": "dag",
-        "pass": "skyDag!@2022",
-        "ip": ['*']
-    }
-]
+AUTH_INTERNAL_API = [{"user": "dag", "pass": "skyDag!@2022", "ip": ["*"]}]
 AUTH_INTERNAL_API_B64 = [
-    hashlib.md5(bytes("%s:%s" % (a['user'], a['pass']), "utf-8")).hexdigest() for a in AUTH_INTERNAL_API]
+    hashlib.md5(bytes("%s:%s" % (a["user"], a["pass"]), "utf-8")).hexdigest()
+    for a in AUTH_INTERNAL_API
+]
 
 # -----------------------------------------------------------------------
 
@@ -101,13 +98,13 @@ oauth = OAuth()
 oauth.init_app(app)
 try:
     oauth.register(
-        name='keycloak',
+        name="keycloak",
         client_id=KEYCLOAK_CLIENT_ID,
         client_secret=KEYCLOAK_CLIENT_SECRET,
         server_metadata_url=KEYCLOAK_SERVER_METADATA_URL,
         client_kwargs={
-            'scope': 'openid email profile',
-            'code_challenge_method': 'S256'  # enable PKCE
+            "scope": "openid email profile",
+            "code_challenge_method": "S256",  # enable PKCE
         },
     )
     oauth.keycloak.load_server_metadata()
@@ -122,7 +119,7 @@ ns = api.namespace("infra_utils", description="infra_utils library as microservi
 
 @ns.route("/fetch_rack_slot_type_by_project")
 class FetchRackSlotTypeByProject(Resource):
-    @mos_authlib.mos_authlib_rest(['admin'])
+    @mos_authlib.mos_authlib_rest(["admin"])
     @ns.expect(
         im_ns(
             ns=ns,
@@ -154,6 +151,31 @@ class FetchRackSlotTypeByProject(Resource):
         out_dict = {"projects": func_outs}
         return make_response(jsonify(out_dict))
 
+@ns.route("/query_stb_info")
+class FetchRackSlotTypeByProject(Resource):
+    @mos_authlib.mos_authlib_rest(["admin"])
+    @ns.expect(
+        im_ns(
+            ns=ns,
+            name="query_stb_info swagger expected model",
+            schema_model={'ip': fields.String(required=True, description="Rack IP address"),
+                            'slot': fields.Integer(required=True, description="Slot SetTopBox")}
+        ),
+        validate=False,
+    )
+    @validate_with_schema(QueryStbInfoSchema())
+    def post(self):
 
-# if __name__ == "__main__":
-#     app.run(debug=True)
+        req_data = request.get_json()
+        print(req_data)
+        # return make_response(jsonify(req_data))
+        data_in: tuple = QueryStbInfoSchema().load(req_data)
+        func_outs = query_stb_info(data_in['ip'],data_in['slot'])
+        return make_response(jsonify(func_outs))
+        # projects = pr["projects"]
+        # func_outs = []
+        #
+        # for p in projects:
+        #     func_outs.append({p: fetch_rack_slot_type_by_project(project=p)})
+        # out_dict = {"projects": func_outs}
+        # return make_response(jsonify(out_dict))
