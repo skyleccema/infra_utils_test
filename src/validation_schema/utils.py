@@ -6,7 +6,21 @@ from flask import request
 from functools import wraps
 
 
-__projects = ["CERRI", "PCC"]
+__projects = [
+    "PCC",
+    "Automation",
+    "Prodotto",
+    "CERRI",
+    "Trionfetti",
+    "SAAS",
+    "MDP",
+    "TEST",
+    "Team_CA",
+    "APP_DE",
+    "SAAS_TEST",
+    "CUG_TRIAL",
+    "MDP_TEST"
+]
 
 __infra_device_types = [
     "Xi1",
@@ -49,7 +63,7 @@ def project_validator(proj: str):
     for p in __projects:
         if proj == p:
             return
-    raise flask_restx.ValidationError("Inserted project is not valid.")
+    raise ValidationError("Inserted project is not valid.")
 
 
 def hw_type_validator(hw_type: str):

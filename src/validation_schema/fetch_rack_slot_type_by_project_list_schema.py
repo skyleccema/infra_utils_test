@@ -8,10 +8,11 @@ from .utils import project_validator
 
 
 @dataclass
-class FetchRackSlotTypeByProjectDC:
-    project: fields.String
+class FetchRackSlotTypeByProjectListDC:
+    projects: fields.List
 
 
-class FetchRackSlotTypeByProjectSchema(Schema):
-    project = fields.String(required=True, validate=project_validator)
-
+class FetchRackSlotTypeByProjectListSchema(Schema):
+    projects = fields.List(
+        fields.String(required=True, validate=project_validator)
+    )

@@ -24,8 +24,9 @@ from infra_utils.QueryInfradb import (
 )
 from dotenv import load_dotenv
 import logging
-from .validation_schema import FetchRackSlotTypeByProjectSchema, QueryStbInfoSchema, GetStbStatusBrokenSchema, \
-    GetBrokenFromRackSchema, GetRackSlotByIpSchema, AvailableSlotsSchema, GetIpSchema
+from .validation_schema import FetchRackSlotTypeByProjectListSchema, QueryStbInfoSchema, GetStbStatusBrokenSchema, \
+    GetBrokenFromRackSchema, GetRackSlotByIpSchema, AvailableSlotsSchema, GetIpSchema, GetStbsByProjectSchema, \
+    FetchRackSlotTypeByProjectSchema
 from .validation_schema.utils import (
     slot_range_validator,
     hw_type_validator,
@@ -50,6 +51,10 @@ app = Flask(__name__)
 # CORS
 CORS(app)
 
+
+# Authorization
+ROLES=["admin", "test_as_you_want"]# , 'automation-infra-proxy'
+
 authorizations = {
     'Bearer': {
         'type': 'apiKey',
@@ -66,7 +71,7 @@ api = Api(app,
                    security=["Bearer"],
                    authorizations=authorizations)
 
-#api = Api(app)
+
 
 # -----------------------------------------------------------------------
 # -- KEYCLOAK SSO --
@@ -118,13 +123,13 @@ except requests.exceptions.ConnectionError as e:
 ns = api.namespace("infra_utils", description="infra_utils library as microservice")
 
 
-@ns.route("/fetch_rack_slot_type_by_project")
-class FetchRackSlotTypeByProject(Resource):
-    @mos_authlib.mos_authlib_rest(["admin"])
+@ns.route("/fetch_rack_slot_type_by_project_list")
+class FetchRackSlotTypeByProjectList(Resource):
+    @mos_authlib.mos_authlib_rest(ROLES)
     @ns.expect(
         im_ns(
             ns=ns,
-            name="fetch_rack_slot_type_by_project swagger expected model",
+            name="fetch_rack_slot_type_by_project from project list swagger expected model",
             schema_model={
                 "projects": fields.List(
                     fields.String(required=True, description="Project Names")
@@ -137,13 +142,13 @@ class FetchRackSlotTypeByProject(Resource):
     #     NewFetchDTO.swagger_model(ns=ns),
     #     validate=False
     # )
-    @validate_with_schema(FetchRackSlotTypeByProjectSchema())
+    @validate_with_schema(FetchRackSlotTypeByProjectListSchema())
     def post(self):
 
         req_data = request.get_json()
         print(req_data)
         # return make_response(jsonify(req_data))
-        pr: dict = FetchRackSlotTypeByProjectSchema().load(req_data)
+        pr: dict = FetchRackSlotTypeByProjectListSchema().load(req_data)
         projects = pr["projects"]
         func_outs = []
 
@@ -154,7 +159,7 @@ class FetchRackSlotTypeByProject(Resource):
 
 @ns.route("/query_stb_info")
 class FetchRackSlotTypeByProject(Resource):
-    @mos_authlib.mos_authlib_rest(["admin"])
+    @mos_authlib.mos_authlib_rest(ROLES)
     @ns.expect(
         im_ns(
             ns=ns,
@@ -177,7 +182,7 @@ class FetchRackSlotTypeByProject(Resource):
 
 @ns.route("/get_stb_status_broken")
 class GetStbStatusBroken(Resource):
-    @mos_authlib.mos_authlib_rest(["admin"])
+    @mos_authlib.mos_authlib_rest(ROLES)
     @ns.expect(
         im_ns(
             ns=ns,
@@ -201,7 +206,7 @@ class GetStbStatusBroken(Resource):
 
 @ns.route("/get_broken_from_rack")
 class GetBrokenFromRack(Resource):
-    @mos_authlib.mos_authlib_rest(["admin"])
+    @mos_authlib.mos_authlib_rest(ROLES)
     @ns.expect(
         im_ns(
             ns=ns,
@@ -222,7 +227,7 @@ class GetBrokenFromRack(Resource):
 
 @ns.route("/query_stb_project_info")
 class FetchRackSlotTypeByProject(Resource):
-    @mos_authlib.mos_authlib_rest(["admin"])
+    @mos_authlib.mos_authlib_rest(ROLES)
     @ns.expect(
         im_ns(
             ns=ns,
@@ -245,7 +250,7 @@ class FetchRackSlotTypeByProject(Resource):
 # TBD
 # @ns.route("/get_all_stb")
 # class FetchRackSlotTypeByProject(Resource):
-#     @mos_authlib.mos_authlib_rest(["admin"])
+#     @mos_authlib.mos_authlib_rest(ROLES)
 #     def post(self):
 #         func_outs: list = get_all_stb()
 #         out_json_list = []
@@ -257,7 +262,7 @@ class FetchRackSlotTypeByProject(Resource):
 
 @ns.route("/get_rack_slot_by_ip")
 class GetRackSlotByIp(Resource):
-    @mos_authlib.mos_authlib_rest(["admin"])
+    @mos_authlib.mos_authlib_rest(ROLES)
     @ns.expect(
         im_ns(
             ns=ns,
@@ -281,7 +286,7 @@ class GetRackSlotByIp(Resource):
 
 @ns.route("/available_slots")
 class AvailableSlots(Resource):
-    @mos_authlib.mos_authlib_rest(["admin"])
+    @mos_authlib.mos_authlib_rest(ROLES)
     @ns.expect(
         im_ns(
             ns=ns,
@@ -305,7 +310,7 @@ class AvailableSlots(Resource):
 
 @ns.route("/get_auto_reboot")
 class FetchRackSlotTypeByProject(Resource):
-    @mos_authlib.mos_authlib_rest(["admin"])
+    @mos_authlib.mos_authlib_rest(ROLES)
     def post(self):
         func_outs: list = get_auto_reboot()
         dict_out: dict = {'autoreboots': func_outs}
@@ -314,7 +319,7 @@ class FetchRackSlotTypeByProject(Resource):
 
 @ns.route("/get_ip")
 class GetIp(Resource):
-    @mos_authlib.mos_authlib_rest(["admin"])
+    @mos_authlib.mos_authlib_rest(ROLES)
     @ns.expect(
         im_ns(
             ns=ns,
@@ -337,3 +342,53 @@ class GetIp(Resource):
         dict_out = {'ip': func_outs}
         return make_response(jsonify(dict_out))
 
+
+@ns.route("/get_stbs_by_project")
+class GetStbsByProject(Resource):
+    @mos_authlib.mos_authlib_rest(ROLES)
+    @ns.expect(
+        im_ns(
+            ns=ns,
+            name="get_stbs_by_project swagger expected model",
+            schema_model={
+                "proj": fields.String(required=True, description="Project Names")
+            },
+        ),
+        validate=False,
+    )
+    @validate_with_schema(GetStbsByProjectSchema())
+    def post(self):
+        req_data = request.get_json()
+        print(req_data)
+        pr: dict = GetStbsByProjectSchema().load(req_data)
+        project = pr["proj"]
+        func_outs: list = get_stbs_by_project(project=project)
+        dict_out: dict = {'stbs': func_outs}
+        return make_response(jsonify(dict_out))
+
+
+
+@ns.route("/fetch_rack_slot_type_by_project")
+class FetchRackSlotTypeByProject(Resource):
+    @mos_authlib.mos_authlib_rest(ROLES)
+    @ns.expect(
+        im_ns(ns=ns, name='fetch_rack_slot_type_by_project swagger expected model',
+              schema_model={"project": fields.String(required=True, description="Project Name")}
+              ),
+        validate=False
+    )
+    # @ns.expect(
+    #     NewFetchDTO.swagger_model(ns=ns),
+    #     validate=False
+    # )
+    @validate_with_schema(FetchRackSlotTypeByProjectSchema())
+    def post(self):
+        req_data = request.get_json()
+        print(req_data)
+        # return make_response(jsonify(req_data))
+        pr: dict = FetchRackSlotTypeByProjectSchema().load(req_data)
+        project = pr["project"]
+
+        func_outs: list[dict] = fetch_rack_slot_type_by_project(project=project)
+        out_dict = {'stbs': func_outs}
+        return make_response(jsonify(out_dict))
