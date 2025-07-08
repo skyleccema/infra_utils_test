@@ -66,10 +66,10 @@ authorizations = {
 }
 
 api = Api(app,
-                   title="Sky Automation - Automation Infra Utils",
-                   description="API REST Sky Automation - Automation Infra Utils Microservice",
-                   security=["Bearer"],
-                   authorizations=authorizations)
+       title="Sky Automation - Automation Infra Utils",
+       description="API REST Sky Automation - Automation Infra Utils Microservice",
+       security=["Bearer"],
+       authorizations=authorizations)
 
 
 
@@ -158,7 +158,7 @@ class FetchRackSlotTypeByProjectList(Resource):
         return make_response(jsonify(dict_out))
 
 @ns.route("/query_stb_info")
-class FetchRackSlotTypeByProject(Resource):
+class QueryStbInfo(Resource):
     @mos_authlib.mos_authlib_rest(ROLES)
     @ns.expect(
         im_ns(
@@ -226,7 +226,7 @@ class GetBrokenFromRack(Resource):
         return make_response(jsonify(dict_out))
 
 @ns.route("/query_stb_project_info")
-class FetchRackSlotTypeByProject(Resource):
+class QueryStbProjectInfo(Resource):
     @mos_authlib.mos_authlib_rest(ROLES)
     @ns.expect(
         im_ns(
@@ -309,7 +309,7 @@ class AvailableSlots(Resource):
 
 
 @ns.route("/get_auto_reboot")
-class FetchRackSlotTypeByProject(Resource):
+class GetAutoReboot(Resource):
     @mos_authlib.mos_authlib_rest(ROLES)
     def post(self):
         func_outs: list = get_auto_reboot()
