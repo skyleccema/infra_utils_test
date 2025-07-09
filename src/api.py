@@ -26,7 +26,8 @@ from dotenv import load_dotenv
 import logging
 from .validation_schema import FetchRackSlotTypeByProjectListSchema, QueryStbInfoSchema, GetStbStatusBrokenSchema, \
     GetBrokenFromRackSchema, GetRackSlotByIpSchema, AvailableSlotsSchema, GetIpSchema, GetStbsByProjectSchema, \
-    FetchRackSlotTypeByProjectSchema, FetchSlotVersionsSchema, FetchRackSlotByProjectAndTypeSchema
+    FetchRackSlotTypeByProjectSchema, FetchSlotVersionsSchema, FetchRackSlotByProjectAndTypeSchema, \
+    FetchRackSlotTypeByProjectGroupedByRackSchema
 from .validation_schema.utils import (
     slot_range_validator,
     hw_type_validator,
@@ -439,3 +440,27 @@ class FetchRackSlotByProjectAndType(Resource):
         dict_out: dict = {'stbs': func_outs}
         return make_response(jsonify(dict_out))
 
+
+@ns.route("/fetch_rack_slot_type_by_project_grouped_by_rack")
+class FetchRackSlotByProjectAndType(Resource):
+    @mos_authlib.mos_authlib_rest(ROLES)
+    @ns.expect(
+        im_ns(
+            ns=ns,
+            name="fetch_rack_slot_type_by_project_grouped_by_rack swagger expected model",
+            schema_model={
+                "proj": fields.String(required=True, description="Project Names")
+            },
+        ),
+        validate=False,
+    )
+    @validate_with_schema(FetchRackSlotTypeByProjectGroupedByRackSchema())
+    def post(self):
+        req_data = request.get_json()
+        print(req_data)
+        pr: dict = FetchRackSlotTypeByProjectGroupedByRackSchema().load(req_data)
+        project = pr["proj"]
+        # func_outs: list = fetch_rack_slot_type_by_project_grouped_by_rack(project=project)
+        # dict_out: dict = {'stbs': func_outs}
+        dict_out: dict = fetch_rack_slot_type_by_project_grouped_by_rack(project=project)
+        return make_response(jsonify(dict_out))
