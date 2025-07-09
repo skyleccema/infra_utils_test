@@ -26,7 +26,7 @@ from dotenv import load_dotenv
 import logging
 from .validation_schema import FetchRackSlotTypeByProjectListSchema, QueryStbInfoSchema, GetStbStatusBrokenSchema, \
     GetBrokenFromRackSchema, GetRackSlotByIpSchema, AvailableSlotsSchema, GetIpSchema, GetStbsByProjectSchema, \
-    FetchRackSlotTypeByProjectSchema
+    FetchRackSlotTypeByProjectSchema, FetchSlotVersionsSchema
 from .validation_schema.utils import (
     slot_range_validator,
     hw_type_validator,
@@ -122,6 +122,30 @@ except requests.exceptions.ConnectionError as e:
 # Namespace
 ns = api.namespace("infra_utils", description="infra_utils library as microservice")
 
+@ns.route("/fetch_rack_slot_type_by_project")
+class FetchRackSlotTypeByProject(Resource):
+    @mos_authlib.mos_authlib_rest(ROLES)
+    @ns.expect(
+        im_ns(ns=ns, name='fetch_rack_slot_type_by_project swagger expected model',
+              schema_model={"project": fields.String(required=True, description="Project Name")}
+              ),
+        validate=False
+    )
+    # @ns.expect(
+    #     NewFetchDTO.swagger_model(ns=ns),
+    #     validate=False
+    # )
+    @validate_with_schema(FetchRackSlotTypeByProjectSchema())
+    def post(self):
+        req_data = request.get_json()
+        print(req_data)
+        # return make_response(jsonify(req_data))
+        pr: dict = FetchRackSlotTypeByProjectSchema().load(req_data)
+        project = pr["project"]
+
+        func_outs: list[dict] = fetch_rack_slot_type_by_project(project=project)
+        out_dict = {'stbs': func_outs}
+        return make_response(jsonify(out_dict))
 
 @ns.route("/fetch_rack_slot_type_by_project_list")
 class FetchRackSlotTypeByProjectList(Resource):
@@ -367,28 +391,26 @@ class GetStbsByProject(Resource):
         return make_response(jsonify(dict_out))
 
 
-
-@ns.route("/fetch_rack_slot_type_by_project")
-class FetchRackSlotTypeByProject(Resource):
+@ns.route("/fetch_slots_versions")
+class FetchSlotVersions(Resource):
     @mos_authlib.mos_authlib_rest(ROLES)
     @ns.expect(
-        im_ns(ns=ns, name='fetch_rack_slot_type_by_project swagger expected model',
-              schema_model={"project": fields.String(required=True, description="Project Name")}
-              ),
-        validate=False
+        im_ns(
+            ns=ns,
+            name="fetch_slots_versions swagger expected model",
+            schema_model={
+                "proj": fields.String(required=True, description="Project Names")
+            },
+        ),
+        validate=False,
     )
-    # @ns.expect(
-    #     NewFetchDTO.swagger_model(ns=ns),
-    #     validate=False
-    # )
-    @validate_with_schema(FetchRackSlotTypeByProjectSchema())
+    @validate_with_schema(FetchSlotVersionsSchema())
     def post(self):
         req_data = request.get_json()
         print(req_data)
-        # return make_response(jsonify(req_data))
-        pr: dict = FetchRackSlotTypeByProjectSchema().load(req_data)
-        project = pr["project"]
+        pr: dict = FetchSlotVersionsSchema().load(req_data)
+        project = pr["proj"]
+        func_outs: list = fetch_slots_versions(project=project)
+        dict_out: dict = {'stbs': func_outs}
+        return make_response(jsonify(dict_out))
 
-        func_outs: list[dict] = fetch_rack_slot_type_by_project(project=project)
-        out_dict = {'stbs': func_outs}
-        return make_response(jsonify(out_dict))
