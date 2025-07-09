@@ -24,6 +24,9 @@ from infra_utils.QueryInfradb import (
 )
 from dotenv import load_dotenv
 import logging
+
+from infra_utils.models import InfraDBStbIaas
+
 from .validation_schema import FetchRackSlotTypeByProjectListSchema, QueryStbInfoSchema, GetStbStatusBrokenSchema, \
     GetBrokenFromRackSchema, GetRackSlotByIpSchema, AvailableSlotsSchema, GetIpSchema, GetStbsByProjectSchema, \
     FetchRackSlotTypeByProjectSchema, FetchSlotVersionsSchema, FetchRackSlotByProjectAndTypeSchema, \
@@ -488,3 +491,49 @@ class FetchRackSlotByProjectAndTypeGroupedByRack(Resource):
         hw_type = pr["typ"]
         dict_out: dict = fetch_rack_slot_by_project_and_type_grouped_by_rack(project=project, device_type=hw_type)
         return make_response(jsonify(dict_out))
+
+
+@ns.route("/get_all_stb")
+class GetAllStb(Resource):
+    @mos_authlib.mos_authlib_rest(ROLES)
+    def post(self):
+        func_outs: list = get_all_stb()
+        dict_out: dict = {'stbs': self.infra_obj_to_json(func_outs)}
+        return make_response(jsonify(dict_out))
+
+    def infra_obj_to_json(self,func_out: list[InfraDBStbIaas]):
+        output = []
+        for el in func_out:
+            output.append({'smart_card_id': el.smart_card_id,
+                           'account_id': el.account_id,
+                           'country_code': el.country_code,
+                           'hardware_name': el.hardware_name,
+                           'chipId': el.chipId,
+                           'deviceid': el.deviceid,
+                           'mac_address_br': el.mac_address_br,
+                           'model_number': el.model_number,
+                           'receiverId': el.receiverId,
+                           'project': el.project,
+                           'version_number': el.version_number,
+                           'serial_number': el.serial_number,
+                           'mac_address': el.mac_address,
+                           'ip': el.ip,
+                           'personalized_pin': el.personalized_pin,
+                           'stb_status': el.stb_status,
+                           'auto_rebot': el.auto_rebot,
+                           'note': el.note,
+                           'used_for': el.used_for,
+                           'last_as_status': el.last_as_status,
+                           'last_as_date': el.last_as_date,
+                           'last_modified': el.last_modified,
+                           'stb_status_info': el.stb_status_info,
+                           'last_as_call': el.last_as_call
+                           }
+                          )
+        return output
+
+    def infra_str_to_json(self,func_out: list[object]):
+        output = []
+        for el in func_out:
+            output.append(str(el))
+        return output
