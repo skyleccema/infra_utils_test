@@ -26,7 +26,7 @@ from dotenv import load_dotenv
 import logging
 from .validation_schema import FetchRackSlotTypeByProjectListSchema, QueryStbInfoSchema, GetStbStatusBrokenSchema, \
     GetBrokenFromRackSchema, GetRackSlotByIpSchema, AvailableSlotsSchema, GetIpSchema, GetStbsByProjectSchema, \
-    FetchRackSlotTypeByProjectSchema, FetchSlotVersionsSchema
+    FetchRackSlotTypeByProjectSchema, FetchSlotVersionsSchema, FetchRackSlotByProjectAndTypeSchema
 from .validation_schema.utils import (
     slot_range_validator,
     hw_type_validator,
@@ -411,6 +411,31 @@ class FetchSlotVersions(Resource):
         pr: dict = FetchSlotVersionsSchema().load(req_data)
         project = pr["proj"]
         func_outs: list = fetch_slots_versions(project=project)
+        dict_out: dict = {'stbs': func_outs}
+        return make_response(jsonify(dict_out))
+
+@ns.route("/fetch_rack_slot_by_project_and_type")
+class FetchRackSlotByProjectAndType(Resource):
+    @mos_authlib.mos_authlib_rest(ROLES)
+    @ns.expect(
+        im_ns(
+            ns=ns,
+            name="fetch_rack_slot_by_project_and_type swagger expected model",
+            schema_model={
+                "proj": fields.String(required=True, description="Project Names"),
+                'typ': fields.String(required=True, description="Hw device type")
+            },
+        ),
+        validate=False,
+    )
+    @validate_with_schema(FetchRackSlotByProjectAndTypeSchema())
+    def post(self):
+        req_data = request.get_json()
+        print(req_data)
+        pr: dict = FetchRackSlotByProjectAndTypeSchema().load(req_data)
+        project = pr["proj"]
+        hw_type = pr["typ"]
+        func_outs: list = fetch_rack_slot_by_project_and_type(project=project, device_type=hw_type)
         dict_out: dict = {'stbs': func_outs}
         return make_response(jsonify(dict_out))
 

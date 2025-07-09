@@ -9,3 +9,4 @@ from .get_ip_schema import GetIpSchema
 from .get_stbs_by_project_schema import GetStbsByProjectSchema
 from .fetch_rack_slot_type_by_project_schema import FetchRackSlotTypeByProjectSchema
 from .fetch_slots_versions_schema import FetchSlotVersionsSchema
+from .fetch_rack_slots_by_project_and_type_schema import FetchRackSlotByProjectAndTypeSchema
